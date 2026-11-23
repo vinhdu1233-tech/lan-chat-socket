@@ -1,67 +1,62 @@
-# LAN Chat & File Sharing — Leader TCP Core
+# LAN Chat & File Sharing — Python Socket Project
 
-**Current state:** This package finishes the leader-owned foundation: `protocol.py`, `tcp_chat.py`, `main.py`. `dev_console.py` is a deliberately limited manual testing harness, **not** the finished rubric-compliant interface. UDP discovery/status, typing-safe CLI and actual file-transfer implementation are pending other members.
+Peer-to-peer chat/file-sharing assignment for a **three-person team**. Each peer runs one program; UDP discovers users and updates status, while TCP handles chat and file transfers.
 
-## Requirements
+> Current status: **Leader TCP Core implemented and tested (16/16 local unit tests)**. UDP discovery, production typing-safe CLI, actual file transfer, two-computer Wireshark evidence, and final report are **pending**.
 
-- Python **3.10+**, no extra libraries for the leader's TCP core.
-- Run two terminals on one computer, or two computers on the same LAN.
-- For communication between computers allow inbound TCP ports through the firewall.
+## Run the current TCP-only demonstration
+Requires Python 3.10+.
 
-## Quick demo on one machine
-
-Terminal A:
-
+Terminal 1:
 ```bash
-python main.py --name Alice --port 5001
+python3 main.py --name Alice --port 5001
 ```
 
-Terminal B:
-
+Terminal 2:
 ```bash
-python main.py --name Bob --port 5002
+python3 main.py --name Bob --port 5002
 ```
 
-On A:
-
+At Alice's prompt:
 ```text
 /connect 127.0.0.1:5002
 /list
 /chat Bob
-Hi Bob!
+Hello Bob!
 ```
 
-On B:
-
+At Bob's prompt:
 ```text
-/list
 /chat Alice
-Hi Alice!
+Hello Alice!
 ```
 
-B can initiate a connection to A instead. To test 3 peers, open a third terminal at `--port 5003` and connect from it to A. To test a real LAN, replace `127.0.0.1` with the listening computer's LAN IPv4 address.
+Add a third peer with `python3 main.py --name Charlie --port 5003` and connect it to Bob. Use the destination machine's LAN IPv4 instead of 127.0.0.1 when testing across computers.
 
-### Known limitations of the manual harness
+**Important:** `dev_console.py` is a development-only console. Its `/list` shows TCP-connected peers, not UDP-discovered peers. Automatic discovery, `/status`, `/send`, and typing-safe input are not yet available.
 
-- `/list` shows **TCP-connected peers**, not UDP-discovered online peers.
-- No discovery status, file sending or prompt redraw yet; member 2/3 will implement these.
-- It may visually interrupt typed input on incoming events; member 2 must fix this in `cli.py`.
-- No built-in persistence or end-to-end encryption is required by the assignment.
-
-## Run tests
-
+## Tests
 ```bash
-python -m unittest discover -s tests -v
+python3 -m unittest discover -s tests -v
 ```
+Baseline: 16 tests passed locally on 2026-11-23. CI is defined in `.github/workflows/python-tests.yml` and runs on GitHub pushes/PRs.
 
-## Architecture and integration contracts
+## Documentation
+- [Architecture and thread model](docs/ARCHITECTURE.md)
+- [**Integration contract — REQUIRED before teammates code**](docs/INTEGRATION_CONTRACT.md)
+- [Team assignments and acceptance criteria](docs/TEAM_TASKS.md)
+- [Acceptance test plan](docs/TEST_PLAN.md)
+- [Report + demo plan](docs/DEMO_AND_REPORT.md)
+- [Project status](docs/PROJECT_STATUS.md)
+- [GitHub collaboration guide](docs/GITHUB_SETUP.md)
+- [Leader study notes (Vietnamese)](HUONG_DAN_LEADER.md)
 
-Read [`docs/INTEGRATION_CONTRACT.md`](docs/INTEGRATION_CONTRACT.md). It contains the event schema, file socket framing, API contracts expected from `discovery.py` and `cli.py`, and rules for `FILE_OFFER`. Modules must preserve the **same peer_id** across UDP announcements and TCP `HELLO`/`HELLO_ACK`.
+## Work split
+| Owner | Main files | Status |
+|---|---|---|
+| Leader | `protocol.py`, `tcp_chat.py`, `main.py`, TCP tests, integration | Core built; final integration pending |
+| Member 2 | `discovery.py`, `cli.py`, UDP/CLI tests | Pending |
+| Member 3 | `file_transfer.py`, file transfer/error tests | Pending |
 
-## P2P principle
-
-Every instance runs `ChatNode.start()` (local TCP acceptor) **and** can call `ChatNode.connect(...)` to other peers. No central chat server. A separate UDP discovery service finds peer addresses. File transfers use separate TCP sockets, keeping chat responsive.
-
-## Submission checklist
-
-Final submission additionally requires source code + README, 5–10 page report, Wireshark captures of UDP broadcast/TCP three-way handshake, and 10-minute live demo on at least 2 computers, per the assignment.
+## Submission requirements
+Source + README, 5–10-page report, Wireshark screenshots demonstrating UDP broadcast and TCP three-way handshake, 10-minute live demo on at least **two physical computers**. These final deliverables remain pending.
