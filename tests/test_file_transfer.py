@@ -18,7 +18,7 @@ from file_transfer import (
     send_file,
     send_file_async,
 )
-from protocol import receive_frame
+from protocol import receive_exact, receive_frame
 from tcp_chat import ChatNode
 
 
@@ -381,7 +381,7 @@ class FileTransferTests(unittest.TestCase):
 
         self.assertEqual(saved_path.read_bytes(), payload)
         # Socket still has exact trailing bytes unread, proving exact byte read.
-        self.assertEqual(s_recv.recv(len(trailing)), trailing)
+        self.assertEqual(receive_exact(s_recv, len(trailing)), trailing)
 
     def test_send_file_async_worker_thread_and_checksum(self):
         received, done, errors = self._register_collector(self.bob)

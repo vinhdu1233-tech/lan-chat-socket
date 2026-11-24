@@ -423,8 +423,11 @@ class FileTransferErrorAndReliabilityTests(unittest.TestCase):
         self.assertFalse(receiver_done.is_set())
 
         # Exchange bidirectional chat messages WHILE the file transfer is mid-flight!
+        # Wait for each turn to arrive before the next reply so history order is deterministic across OSes.
         self.alice.send_message("bob-err", "Tin nhắn trong lúc gửi file #1")
+        wait_for(lambda: len(self.bob.get_history("alice-err")) == 1)
         self.bob.send_message("alice-err", "Bob vẫn nhận và trả lời bình thường!")
+        wait_for(lambda: len(self.alice.get_history("bob-err")) == 2)
         self.alice.send_message("bob-err", "Tin nhắn trong lúc gửi file #2")
 
         wait_for(lambda: len(self.bob.get_history("alice-err")) == 3)
