@@ -100,3 +100,37 @@ class ConsoleTests(unittest.TestCase):
             self.assertIn("[Alex] hey\n> draft", stream.getvalue())
             yield from "\x7fT!\r"
         self.assertEqual(terminal.read_line(keys().__next__), "drafT!")
+
+    def test_send_throttles_progress_supports_single_quotes_and_shows_file_received(self):
+        finished = threading.Event()
+        received_args = []
+
+        def fake_send_file(node, peer, path, progress_cb):
+            received_args.append((node, peer, path))
+            # Simulate 160 chunks (like a 10 MB file).
+            progress_cb(0.0)
+            for i in range(1, 160):
+                progress_cb((i / 160) * 100.0)
+            progress_cb(100.0)
+            finished.set()
+
+        with patch.dict("sys.modules", file_transfer=types.SimpleNamespace(send_file=fake_send_file)):
+            self.console.handle("/send '/tmp/my folder/slides.pdf'")
+            self.assertTrue(finished.wait(2.0))
+
+        self.assertEqual(received_args, [(self.node, "b", "/tmp/my folder/slides.pdf")])
+        progress_lines = [line for line in self.lines if "slides.pdf" in line]
+        # Throttled to 10% buckets (0%, 10%, ..., 90%, 100% -> at most 11 lines instead of 161).
+        self.assertLessEqual(len(progress_lines), 11)
+        self.assertIn("100%", progress_lines[-1])
+
+        self.console.show_chat_event(
+            ChatEvent(
+                "file_received",
+                "a",
+                "Alex",
+                "Received file 'slides.pdf' (1024 bytes) -> downloads/slides.pdf",
+            )
+        )
+        self.assertIn("[File from Alex]", self.lines[-1])
+        self.assertIn("slides.pdf", self.lines[-1])
