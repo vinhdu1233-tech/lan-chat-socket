@@ -159,9 +159,23 @@ class Console:
         except ImportError as exc:
             self.notice(f"File transfer unavailable: {exc}")
             return
+        display_name = os.path.basename(path) or path
+        last_bucket = {"value": -1}
+
+        def report(percent):
+            pct = float(percent)
+            if pct >= 100.0:
+                if last_bucket["value"] < 10:
+                    last_bucket["value"] = 10
+                    self.notice(f"Sent {display_name}: 100%")
+                return
+            bucket = max(0, int(pct // 10))
+            if bucket > last_bucket["value"]:
+                last_bucket["value"] = bucket
+                self.notice(f"Sending {display_name}: {pct:.1f}%")
+
         try:
-            send_file(self.node, peer_id, path,
-                      progress_cb=lambda percent: self.notice(f"Sending {path}: {percent}%"))
+            send_file(self.node, peer_id, path, progress_cb=report)
         except Exception as exc:
             self.notice(f"File transfer failed: {exc}")
 
@@ -191,7 +205,10 @@ class Console:
                 peer_id = self.node.active_peer_id
                 if not peer_id:
                     raise ValueError("Open a chat before sending a file")
-                path = arg[1:-1] if len(arg) >= 2 and arg[0] == arg[-1] == '"' else arg
+                if len(arg) >= 2 and arg[0] == arg[-1] and arg[0] in ('"', "'"):
+                    path = arg[1:-1]
+                else:
+                    path = arg
                 threading.Thread(target=self._send_file, args=(peer_id, path), daemon=True).start()
             elif cmd == "/status" and arg in ("online", "away"):
                 self.discovery.set_status(arg)
@@ -214,6 +231,8 @@ class Console:
         elif event.kind == "unread":
             if self.node.unread_count(event.peer_id):
                 self.notice(f"New message from {event.peer_name} ({event.unread_count} unread)")
+        elif event.kind == "file_received":
+            self.notice(f"[File from {event.peer_name}] {event.message}")
         elif event.kind == "error":
             self.notice(f"Error: {event.message}")
         else:

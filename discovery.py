@@ -19,12 +19,14 @@ class Peer:
 
 class DiscoveryService:
     def __init__(self, peer_id, name, tcp_port, *, udp_port=9999,
-                 broadcast="255.255.255.255"):
+                 broadcast="255.255.255.255", bind_host="", target_port=None):
         self.peer_id = peer_id
         self.name = name
         self.tcp_port = tcp_port
         self.udp_port = udp_port
         self.broadcast = broadcast
+        self.bind_host = bind_host
+        self.target_port = target_port
         self.events = queue.Queue()
         self._peers = {}
         self._status = "online"
@@ -46,7 +48,8 @@ class DiscoveryService:
                 except OSError:
                     pass  # Some systems expose the constant without supporting it.
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            sock.bind(("", self.udp_port))
+            sock.bind((self.bind_host, self.udp_port))
+            self.udp_port = sock.getsockname()[1]
             sock.settimeout(0.2)
         except OSError:
             sock.close()
@@ -87,10 +90,11 @@ class DiscoveryService:
             self._changed.clear()
             with self._lock:
                 status = self._status
-            packet = dict(type="HELLO", peer_id=self.peer_id, name=self.name,
+            packet = dict(type="HELLO", version=1, peer_id=self.peer_id, name=self.name,
                           tcp_port=self.tcp_port, status=status)
+            dest_port = self.target_port if self.target_port is not None else self.udp_port
             try:
-                sock.sendto(json.dumps(packet).encode(), (self.broadcast, self.udp_port))
+                sock.sendto(json.dumps(packet).encode(), (self.broadcast, dest_port))
             except OSError as exc:
                 self.events.put(f"UDP broadcast failed: {exc}")
             if not self._stop.is_set():
@@ -115,6 +119,8 @@ class DiscoveryService:
         try:
             packet = json.loads(data.decode("utf-8"))
             if not isinstance(packet, dict) or packet.get("type") != "HELLO":
+                return
+            if "version" in packet and packet["version"] != 1:
                 return
             pid, name = packet["peer_id"], packet["name"]
             port, status = packet["tcp_port"], packet["status"]

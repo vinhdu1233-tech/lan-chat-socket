@@ -59,7 +59,7 @@ class _Connection:
 
 
 # The socket belongs to the file handler until it returns.
-FileHandler = Callable[[socket.socket, dict[str, Any], tuple[str, int]], None]
+FileHandler = Callable[[socket.socket, dict[str, Any], tuple[str, int]], Any]
 
 
 class ChatNode:
@@ -193,7 +193,23 @@ class ChatNode:
                     send_frame(sock, {"type": "ERROR", "reason": "file handler unavailable"})
                     return
                 sock.settimeout(None)
-                handler(sock, first, addr)
+                saved = handler(sock, first, addr)
+                sender_id = str(first.get("sender_id") or "")
+                sender_name = ""
+                if sender_id:
+                    with self._lock:
+                        peer_conn = self._connections.get(sender_id)
+                        if peer_conn is not None:
+                            sender_name = peer_conn.name
+                display_sender = sender_name or sender_id or addr[0]
+                filename = first["filename"]
+                size = first["size"]
+                detail = (
+                    f"Received file '{filename}' ({size} bytes) -> {saved}"
+                    if saved is not None
+                    else f"Received file '{filename}' ({size} bytes)"
+                )
+                self._emit("file_received", sender_id, display_sender, detail)
                 return
             if kind != "HELLO":
                 raise ProtocolError("first chat frame must be HELLO")
