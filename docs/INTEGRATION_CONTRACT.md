@@ -1,4 +1,6 @@
-# Integration contract — Freeze before assigning members 2 & 3
+# Integration contract — implemented interfaces
+
+Original team interface agreement, updated after PR #6.
 
 ## 1. Architecture
 
@@ -37,7 +39,7 @@ The `peer_id` must be reused for UDP discovery and TCP; it is stable for a progr
 - TCP max message size **1 MiB UTF-8**; headers max **16 KiB**.
 - Because TCP messages and file content use separate sockets, `FILE_OFFER` is never sent on an existing chat socket.
 
-### File transfer (Member 3 — NOT IMPLEMENTED YET)
+### File transfer (Member 3 — implemented)
 
 Open a **new TCP socket** to the recipient's TCP listener. Send:
 
@@ -45,7 +47,7 @@ Open a **new TCP socket** to the recipient's TCP listener. Send:
 {"type":"FILE_OFFER","sender_id":"abc123","filename":"slides.pdf","size":123456}
 ```
 
-Then transmit **exactly 123456 file bytes**, in chunks, using `sock.sendall` and display progress based on file bytes sent. Receiver is called with this header already parsed by leader's TCP listener; it reads exactly `size` bytes, validates/sanitizes the filename, writes to `downloads/`, detects interruption and removes partial files. The file handler owns this socket until it returns (leader closes it in `finally`). A simple completion frame **may** be sent after the file bytes if both sender and receiver agree, but is not part of the initial contract. If no file handler is installed, the receiver responds with `{ "type": "ERROR", "reason": "file handler unavailable" }` and closes the connection.
+Then transmit **exactly 123456 file bytes**, in chunks, using `sock.sendall` and display progress based on file bytes sent. Receiver is called with this header already parsed by leader's TCP listener; it reads exactly `size` bytes, validates/sanitizes the filename, writes to `downloads/`, detects interruption and removes partial files. The file handler owns this socket until it returns (leader closes it in `finally`). No final application-level file completion ACK is currently implemented. If no file handler is installed, the receiver responds with `{ "type": "ERROR", "reason": "file handler unavailable" }` and closes the connection.
 
 **Important:** `open_file_connection(peer_id)` works for existing TCP-connected peers. Member 3 can also connect to a discovered peer's `host:tcp_port` if the chat connection is not yet open; do not require a chat socket just to transfer a file unless the UI says so. Sender must close the file socket. Do not transmit directory paths as filenames; only use the basename. Consider duplicate file names and failed/cancelled transfers. No resuming required by the assignment.
 
@@ -78,6 +80,7 @@ node.stop()
 - `unread`: message arrived from another peer; show count, preserve history.
 - `disconnected`: connection closed/peer crashed.
 - `error`: recoverable error; `message` contains explanatory text.
+- `file_received`: completed download notification emitted after the receive handler returns successfully.
 
 UI must **not** read TCP sockets directly; it consumes these events. Chat histories and unread counters are guarded by locks inside the TCP core. This is in-memory message history, not durable database storage.
 
@@ -94,7 +97,7 @@ service.set_status("online")
 service.stop()
 ```
 
-Required behavior: broadcast every 3 seconds on UDP 9999, listen on the same fixed UDP port, expire peers after 10 seconds, report online/offline events and support statuses `online`/`away`. `SO_REUSEADDR`/`SO_REUSEPORT` before bind helps when testing 3 peers on one host. Use `peer_id` to ignore own announcements. UDP messages can use JSON (agreed by the group), rather than teacher's illustrative `HELLO|...` format, since the assignment allows designing your own protocol.
+Required behavior: broadcast every 3 seconds on UDP 9999, listen on the same fixed UDP port, expire peers after 10 seconds, report online/offline events and support statuses `online`/`away`. `SO_REUSEADDR`/`SO_REUSEPORT` before bind helps when testing 3 peers on one host. Use `peer_id` to ignore own announcements. UDP messages use JSON with `type: HELLO`, `version: 1`, `peer_id`, `name`, `tcp_port`, and `status`. The receiver checks an included version against 1.
 
 `cli.py` provides:
 
@@ -132,7 +135,7 @@ Any change to wire protocol needs leader review **before** coding. Unit tests: e
 
 ## 7. Testing and scope
 
-`python -m unittest discover -s tests -v` tests leader's implementation independently. Additional module tests are required before submission. Demo on at least **two computers**; use three local terminals for development. Final submission also needs README, report 5–10 pages and Wireshark captures.
+`python -m unittest discover -s tests -v` runs the integrated 56-test suite, including two end-to-end integration tests. Demo on at least **two computers**; use three local terminals for development. Final submission also needs README, report 5–10 pages and Wireshark captures.
 
 ## 8. Separation of ownership
 

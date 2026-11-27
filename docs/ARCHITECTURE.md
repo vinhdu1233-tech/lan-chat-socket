@@ -1,4 +1,4 @@
-# Architecture — Leader design
+# Architecture — Integrated application
 
 ## Topology
 Every peer listens on a TCP port and may connect directly to other peers; **there is no central chat server**. UDP discovery (Member 2) broadcasts presence to UDP port 9999 every three seconds and expires peers after ten seconds. TCP chat and file transfers use reliable streams. File transfers use **a separate TCP socket** so they do not block messages.
@@ -27,8 +27,9 @@ flowchart LR
 - Main thread: command input / interface.
 - TCP accept thread: accepts new socket connections.
 - Per-chat receiver thread: framing, history, unread count and notifications.
-- Member 2 adds UDP broadcaster, UDP listener, timeout cleanup and typing-safe UI.
-- Member 3 adds independent sender worker per transfer.
+- UDP broadcaster sends versioned HELLO every 3 seconds or immediately on status change; UDP listener maintains and expires peers after 10 seconds.
+- Console event worker consumes chat/discovery events; the terminal redraws editable input under a lock.
+- Dedicated file sender worker per transfer; incoming file handler runs in an accepted-connection worker.
 
 ## Synchronization
 - `ChatNode._lock` protects shared peer list/history/unread/active selection.
@@ -37,4 +38,4 @@ flowchart LR
 - `peer_id` identifies one process/session across UDP discovery and TCP HELLO.
 
 ## Limitations
-TCP-only developer console is not typing-safe. Chat history is RAM-only. No login, encryption or per-message delivery acknowledgments. UDP/real file transfer/final demo are pending.
+The final CLI is typing-safe in interactive terminals; the TCP-only development fallback and non-interactive input do not provide this guarantee. Chat history is RAM-only. No login, encryption, per-message delivery acknowledgments or final file-delivery ACK. UDP discovery and file transfer are implemented; physical two-computer LAN acceptance and live demonstration remain pending.
