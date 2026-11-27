@@ -1,15 +1,15 @@
 # Verification and acceptance plan
 
-Leader's existing automated command:
+Integrated automated command:
 ```bash
 python3 -m unittest discover -s tests -v
 ```
-Baseline on 2026-11-23: 16/16 PASS locally, before integration. Run CI on every PR. Do not label tests PASS merely because the plan exists.
+Verified implementation baseline `94b9736`: 56 tests passed in the Ubuntu Python 3.12 log and all six CI jobs passed in [run 45931911100](https://github.com/vinhdu1233-tech/lan-chat-socket/actions/runs/45931911100). Run CI on every PR. Physical LAN results must be recorded in [LAN_ACCEPTANCE.md](evidence/LAN_ACCEPTANCE.md).
 
-## TCP Core manual smoke test
-Start Alice (5001), Bob (5002), Charlie (5003) in three terminals. Alice connects to Bob via `/connect 127.0.0.1:5002`. Charlie also connects to Bob. While Bob's active chat is Alice, Charlie sends two messages; verify unread counter 2 then `/chat Charlie` displays history and unread resets. Exit Alice and verify Bob continues chatting with Charlie. Test `/leave`, reconnect and long UTF-8 messages.
+## Integrated application smoke test
+Start Alice (5001), Bob (5002), Charlie (5003) in interactive terminals. Use `/list` to discover peers, then `/chat Bob` or `/chat Alice`. Verify two-way chat, unread from Charlie, switching history, /leave and reconnect. The development-only `/connect` command is not needed.
 
-## Final integration acceptance (all currently PENDING)
+## Final integration acceptance (physical LAN checks pending)
 | ID | Test | Expected result |
 |---|---|---|
 | U1 | Two physical LAN peers start | UDP discovery in `/list` |
@@ -23,8 +23,8 @@ Start Alice (5001), Bob (5002), Charlie (5003) in three terminals. Alice connect
 | F2 | Chat while file is streaming | Chat remains responsive |
 | F3 | Interrupt transfer | Partial file removed, error shown |
 | E1 | Connect offline / bad command | No crash, useful error |
-| W1 | Capture UDP broadcast | `udp.port == 9999`, annotated screenshot |
-| W2 | Capture TCP handshake | SYN, SYN-ACK, ACK identified |
+| W1 | Capture UDP broadcast | Locally captured; see [observations](evidence/README.md); PNG upload pending |
+| W2 | Capture TCP handshake | Locally captured; frames 50–52 identified; PNG upload pending |
 | D1 | Complete demo | 10 minutes, >= 2 physical computers |
 
 Record test date, OS, Python version, steps, expected and actual outcome under `docs/evidence/`. Never fabricate Wireshark evidence.

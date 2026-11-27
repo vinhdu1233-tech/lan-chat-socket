@@ -1,28 +1,22 @@
 # Project status — 2026-11-27
 
-## Published & Merged on GitHub (`main`)
-- **Leader (TCP Core):** `protocol.py`, `tcp_chat.py`, `main.py`, `dev_console.py`, `tests/test_protocol.py` (7 tests), `tests/test_chat.py` (9 tests), GitHub Actions CI (`.github/workflows/python-tests.yml`), architecture and integration docs.
-- **Member 3 (File Transfer — PR #4 merged):** `file_transfer.py`, `tests/test_file_transfer.py` (13 tests), `tests/test_errors.py` (13 tests) — dedicated TCP socket, `FILE_OFFER` framing, 64 KiB chunked streaming, 0–100% progress callback, UTF-8 & duplicate-safe saving to `downloads/`, `.part` cleanup on errors/timeouts, concurrent chat + SHA-256 verification.
-- **Member 2 (UDP Discovery & CLI — PR #5 merged):** `discovery.py`, `cli.py`, `tests/test_discovery.py` (4 baseline tests), `tests/test_cli.py` (5 baseline tests) — UDP port 9999 broadcast every 3s, 10s expiry, `/status online|away`, standard-library typing-safe console UI (`msvcrt`/`termios`), `/list`, `/chat`, `/send`, `/leave`, `/help`, `/quit`.
-- **GitHub Actions CI on `main`:** 51/51 tests passing across `ubuntu-latest`, `macos-latest`, and `windows-latest` (Python 3.10 & 3.12).
-- GitHub repository: https://github.com/vinhdu1233-tech/lan-chat-socket
+## Integrated implementation
+- TCP Core, UDP discovery and typing-safe CLI, file transfer and integration polish are merged into `main` (PRs #4, #5 and #6).
+- Verified implementation commit: `94b9736a95add5d73346612bc5f663486f8b8bcc`.
+- [GitHub Actions run 45931911100](https://github.com/vinhdu1233-tech/lan-chat-socket/actions/runs/45931911100): all six matrix jobs passed; Ubuntu Python 3.12 log confirms 56 tests, OK.
+- Automated test counts: protocol 7, chat 9, discovery 6, CLI 6, file transfer 13, errors 13, integration 2.
+- UDP presence uses versioned JSON on 9999, announcements every 3 seconds and expiry after 10 seconds; CLI supports safe redraw, progress throttling and file-received notices.
 
-## Completed on Integration Polish Branch (`fix/integration-improvements`)
-- Receiver-side `file_received` event emission in `tcp_chat.py` and `[File from ...]` display in `cli.py`.
-- Throttled and formatted `/send` progress updates in `cli.py` (10% increments up to `100%`, avoiding 160+ spam lines on 10 MB transfers) plus support for both single-quoted and double-quoted file paths.
-- UDP `HELLO` `"version": 1` field and version check in `discovery.py`, plus live UDP socket `start()`/`stop()` tests in `tests/test_discovery.py`.
-- Full end-to-end integration tests without mocks in `tests/test_integration.py` (2 tests).
-- **Automated test status on `fix/integration-improvements`:** **56/56 PASS** locally (`-W default`, 0 warnings) and **6/6 PASS** in GitHub Actions CI.
+## Submission evidence
+- Two real Wireshark screenshots captured on 27 November on one Mac (Wi-Fi UDP and loopback TCP). [Capture analysis](evidence/README.md) records observed frames and ports.
+- The 10-page English report with both screenshots has been updated locally to the 56-test baseline. [Markdown companion](PROJECT_REPORT.md) is available; the actual PDF/DOCX and standalone PNGs still need to be uploaded.
+- [Physical LAN acceptance record](evidence/LAN_ACCEPTANCE.md) is ready but has no physical two-computer PASS claims.
+- [Live demo plan](DEMO_AND_REPORT.md) is ready for rehearsal.
 
-## Pending Before Final Submission
-- Review and merge `fix/integration-improvements` into `main` via Pull Request.
-- Physical **two-computer LAN** verification (firewall rules for UDP 9999 and TCP ports, acceptance checklist `U1–U4`, `T1–T3`, `F1–F3`, `E1`, `W1–W2` in `docs/TEST_PLAN.md`).
-- Capture and annotate **Wireshark evidence** under `docs/evidence/` (UDP broadcast on port 9999, TCP three-way handshake `SYN`/`SYN-ACK`/`ACK`, separate TCP stream for `FILE_OFFER` and chunked payload).
-- Finalize the **5–10-page report** combining all three members' technical sections, test evidence, and Wireshark screenshots.
-- Rehearse and deliver the **10-minute live demonstration** on at least two physical computers.
+## Remaining
+1. Upload formatted report and two original screenshots to the repository (no unfiltered pcapng files).
+2. Test on two physical computers, record evidence and outcomes; correct any failures.
+3. Rehearse and deliver the required 10-minute live demo.
+4. Review submission checklist in Issue #3. Close only when all evidence and delivery requirements are satisfied.
 
-## Next Checkpoints
-1. Merge `fix/integration-improvements` PR into `main` and confirm 56/56 CI green on `main`.
-2. Run the two-machine LAN test session and record real Wireshark captures in `docs/evidence/`.
-3. Assemble and review the 5–10-page final report against actual code and test logs.
-4. Rehearse the 10-minute demo following `docs/DEMO_AND_REPORT.md`.
+The local captures and automated CI do not prove connectivity between physical LAN computers.

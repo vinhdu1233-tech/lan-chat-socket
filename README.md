@@ -2,7 +2,7 @@
 
 Peer-to-peer chat and file-sharing application for a **three-person team**. Each peer runs a single program with **no central server** and **no external dependencies** (Python 3.10+ standard library only): UDP broadcasts discover online peers and status updates, while TCP handles bidirectional multi-peer chat and dedicated-socket file transfers.
 
-> Current status: **All three core modules (TCP Core, UDP Discovery + Typing-safe CLI, and TCP File Transfer) are implemented and integrated (56/56 automated tests passing in CI across Ubuntu, macOS, and Windows)**. Physical two-computer LAN verification, Wireshark captures under `docs/evidence/`, the 5–10-page final report, and the 10-minute live demo remain **pending**.
+> Current status: **All core modules are integrated; 56 automated tests passed and all six CI jobs succeeded** ([verified CI run](https://github.com/vinhdu1233-tech/lan-chat-socket/actions/runs/45931911100)). The required UDP and TCP handshake screenshots have been captured on one Mac; their observations and the report text are documented below. Upload of the formatted report and original screenshots, two-computer LAN verification, and the live demo remain pending.
 
 ## Requirements & Installation
 - **Python 3.10+** (tested on Python 3.10 and 3.12 across Windows, macOS, and Linux).
@@ -87,6 +87,9 @@ GitHub Actions CI (`.github/workflows/python-tests.yml`) runs bytecode compilati
 - [Team assignments and acceptance criteria](docs/TEAM_TASKS.md)
 - [Acceptance test plan](docs/TEST_PLAN.md)
 - [Report + demo plan](docs/DEMO_AND_REPORT.md)
+- [Technical report (Markdown companion)](docs/PROJECT_REPORT.md)
+- [Wireshark capture analysis](docs/evidence/README.md)
+- [Physical LAN acceptance record](docs/evidence/LAN_ACCEPTANCE.md)
 - [Project status](docs/PROJECT_STATUS.md)
 - [GitHub collaboration guide](docs/GITHUB_SETUP.md)
 - [Leader study notes (Vietnamese)](HUONG_DAN_LEADER.md)
@@ -94,12 +97,17 @@ GitHub Actions CI (`.github/workflows/python-tests.yml`) runs bytecode compilati
 ## Work Split & Status
 | Owner | Main files | Status |
 |---|---|---|
-| Leader | `protocol.py`, `tcp_chat.py`, `main.py`, TCP tests, integration | Implemented & merged on `main`; final 2-PC integration & report pending |
+| Leader | `protocol.py`, `tcp_chat.py`, `main.py`, TCP tests, integration | Implemented & merged on `main`; final LAN acceptance and demo pending |
 | Member 2 | `discovery.py`, `cli.py`, `tests/test_discovery.py`, `tests/test_cli.py` | Implemented & merged on `main` (PR #5) |
-| Member 3 | `file_transfer.py`, `tests/test_file_transfer.py`, `tests/test_errors.py` | Implemented & merged on `main` (PR #4); integration polish on `fix/integration-improvements` |
+| Member 3 | `file_transfer.py`, `tests/test_file_transfer.py`, `tests/test_errors.py` | Implemented & merged on `main` (PR #4); integration improvements merged in PR #6 |
 
-## Remaining Submission Deliverables
-- Physical two-computer LAN acceptance test log (`docs/TEST_PLAN.md` checklist)
-- Annotated Wireshark screenshots (`docs/evidence/`) demonstrating UDP broadcast (`udp.port == 9999`), TCP 3-way handshake, and dedicated `FILE_OFFER` TCP stream
-- Final 5–10-page project report
-- 10-minute live demonstration on at least **two physical computers**
+## Submission checklist
+- [x] Source code and installation/run/test instructions.
+- [x] Automated verification: 56 tests; six CI jobs successful on implementation commit `94b9736`.
+- [x] Capture UDP broadcast and TCP three-way handshake on one Mac; [observations and scope](docs/evidence/README.md) recorded.
+- [x] Technical report prepared (Markdown companion available); formatted 10-page report prepared locally.
+- [ ] Upload the actual two PNG screenshots and formatted report (PDF/DOCX) to `docs/`.
+- [ ] Record physical two-computer LAN acceptance results in [LAN_ACCEPTANCE.md](docs/evidence/LAN_ACCEPTANCE.md).
+- [ ] Rehearse and deliver the 10-minute live demonstration on at least two physical computers.
+
+Only UDP broadcast and TCP three-way handshake screenshots are required by the assignment; a FILE_OFFER capture is optional. Do not commit unfiltered network captures to this repository.

@@ -1,31 +1,22 @@
-# Report and live demonstration
+# Report and 10-minute live demonstration
 
-## Required submission
-1. Source with README covering install, run and tests.
-2. Report of 5–10 pages: architecture, thread model, protocol format, challenges, solutions and tests.
-3. Wireshark screenshots proving UDP broadcast and TCP three-way handshake with written explanation.
-4. Live 10-minute demo on **at least 2 computers** connected to the same LAN.
+## Submission
+1. Source and README (install, run, test).
+2. Technical report of 5–10 pages (architecture, thread model, protocol, challenges and solutions). The formatted 10-page report with local capture evidence has been prepared locally; see [Markdown companion](PROJECT_REPORT.md).
+3. Required Wireshark screenshots: UDP broadcast and TCP three-way handshake with explanations. [Observed packet analysis](evidence/README.md) is recorded. Original PNGs remain to be uploaded.
+4. Ten-minute live demonstration on at least two physical computers. Pending.
 
-## Report outline (5–10 pages)
-- Title, team members, objectives and scope.
-- P2P architecture, UDP vs TCP rationale and module ownership.
-- Application-layer protocol: discovery messages, framed JSON headers, exact payload reads, handshake.
-- Concurrency: accepting connections, receiver workers, locks, event queue, separate file sender, UI redraw.
-- Implementation: commands, status/expiry, multi-peer history/unread, file progress.
-- Error handling and test evidence, Wireshark captures, problems/solutions.
-- Limitations and conclusion.
+## Setup before rehearsal
+Use two physical computers on the same LAN. Run Alice on port 5001, Bob on 5002, and optionally Charlie on 5003 on either computer. Open an interactive terminal per peer, run the full test suite, prepare a PDF and a large test file, and verify firewall rules. Use /list then /chat, not the old development-only /connect command.
 
-Each member drafts their technical section. Leader reviews final report for alignment with actual code.
-
-## 10-minute demo
-| Time | Person | Content |
+| Time | Owner | Demonstration |
 |---|---|---|
-| 0:00–1:30 | Leader | P2P architecture and protocol |
-| 1:30–3:00 | Member 2 | Discovery and status |
-| 3:00–5:00 | Leader | Chat, unread, 3 peers, reconnect |
-| 5:00–7:00 | Member 3 | File transfer during chat, progress |
-| 7:00–8:30 | Members 2+3 | Typing-safe UI and errors |
-| 8:30–9:30 | Leader | Wireshark filters and TCP handshake |
-| 9:30–10:00 | All | Summary and individual contributions |
+| 0:00–1:30 | Leader | Explain P2P and UDP/TCP; show project modules and framing |
+| 1:30–3:00 | Member 2 | /list, /status away, peer expiry |
+| 3:00–5:00 | Leader | /chat, two-way UTF-8 chat, third-peer unread, /leave and reconnect |
+| 5:00–7:00 | Member 3 | /send a file, progress, receive notice, downloads and checksum; chat during transfer |
+| 7:00–8:30 | Members 2 and 3 | Preserve typing during incoming message; invalid command/missing file |
+| 8:30–9:30 | Leader | Show actual UDP and SYN/SYN-ACK/ACK capture; distinguish application HELLO |
+| 9:30–10:00 | All | 56-test CI baseline, individual contributions, limitations and conclusion |
 
-Filters: `udp.port == 9999`, `tcp.flags.syn == 1` (for handshake start), TCP destination port as appropriate. Evidence still needs to be captured during a real run.
+Record the actual results in [LAN_ACCEPTANCE.md](evidence/LAN_ACCEPTANCE.md). Capture filters: `udp.port == 9999`; isolate a new TCP connection with `tcp.stream == N` after identifying its SYN. Do not claim completed live demo until performed.
